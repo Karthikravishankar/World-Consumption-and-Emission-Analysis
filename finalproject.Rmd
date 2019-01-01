@@ -1,0 +1,463 @@
+---
+title: "Final Project"
+author: "Karthik Ravishankar and Matt Kohane"
+date: "November 30, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+library(rvest)
+
+
+
+url <- "https://developers.google.com/public-data/docs/canonical/countries_csv"
+html = read_html(url)
+tables <- html %>% html_table(fill=TRUE)
+length(tables)
+str(tables[[1]])
+data <- tables[[1]] 
+nrow(data)
+
+getwd()
+library(tidyverse)
+
+dfco2pc <- read.csv("finalprojectco2.csv",sep = "\t")
+
+
+df_co2kt <- read.csv("finalproject_co2kt.csv",sep = "\t")
+
+
+df_electric <- read.csv("finalproject_electricpower.csv",sep="\t")
+
+
+df_income <- read.csv("finalproject_income.csv",sep = "\t")
+
+
+df_population <- read.csv("finalproject_population.csv",sep = "\t")
+
+
+df_elec_kwpy = df_electric%>%select(Country.Name, Country.Code, X2014, X2009, X2004, X1990)
+df_elec_kwpy$X2014 = df_elec_kwpy$X2014 * df_population$X2014
+
+
+
+df_gdp <- read.csv("final_gdp.csv")
+
+
+
+```
+
+```{r  (case study- 5 country specific- 10year timescale - electricity consumption)}
+
+
+```
+
+```{r  (case study- 5 country specific- 10year timescale - co2 emmission)}
+
+
+```
+
+```{r  (case study- 5 country specific- 10year timescale - population)}
+#Look at top 5 countries and see 10 yr growth of poplulation
+
+```
+
+```{r  (case study- Top 5 populated - country specific - Relations of population with other factors)}
+#Look at top 5 populated countries and see what relations it has with co2 emission and electric comsumption and income
+library(ggplot2)
+
+
+
+
+df = df_population%>%select(Country.Name,X2014)
+df$co2 = df_co2kt$X2014
+
+g1 = ggplot(data= df, aes(x = log(df$X2014), y = log(df$co2),color = df$co2 )) + geom_point() + ggtitle("Population vs CO2 Emissions(Kilo Tons) in 2014") + xlab("Population") + ylab("CO2 Emissions(Kilo Tons)") + labs(color='Scale') 
+
+
+df1 = df_population%>%select(Country.Name,X1980)
+df1$co2 = df_co2kt$X1980
+
+g2 = ggplot(data= df1, aes(x = log(df1$X1980), y = log(df$co2),color = df$co2 )) + geom_point() + ggtitle("Population vs CO2 Emissions(Kilo Tons) in 1980") + xlab("Population") + ylab("CO2 Emissions(Kilo Tons)") + labs(color='Scale') 
+
+#grid.arrange(g1, g2, nrow = 2)
+g1
+g2
+#gdp and co2 emmission
+
+
+df1 = df_gdp%>%select(Country.Name, X2014) 
+df1$co2 = df_co2kt$X2014
+
+
+ggplot(data= df1, aes(x = log(df1$X2014), y = log(df1$co2),color = df1$co2 )) + geom_point() + ggtitle("GDP vs CO2 Emissions(Kilo Tons) in 2014") + xlab("GDP") + ylab("CO2 Emissions(Kilo Tons)") + labs(color='Scale') 
+
+
+
+#population and electrcity consumption
+
+df2 = df_population%>%select(Country.Name,X2014)
+df2$electricity = df_elec_kwpy$X2014
+ggplot(data= df2, aes(x = log(df2$X2014), y = log(df2$electricity),color = df2$electricity)) + geom_point() + ggtitle("Population vs Electricity Consumption kWh per year in 2014") + xlab("Population") + ylab("Electricity Consumption kWh") + labs(color='Scale') 
+
+
+#gdp and electricity comsumption
+df3 = df_gdp%>%select(Country.Name, X2014)
+df3$electricity = df_elec_kwpy$X2014
+
+ggplot(data= df3, aes(x = log(df3$X2014), y = log(df3$electricity) ,color = df3$electricity)) + geom_point() + ggtitle("GDP vs Electricity Consumption kWh per year in 2014") + xlab("GDP") + ylab("Electricity Consumption kWh") + labs(color='Scale') 
+
+
+df3 = df_gdp%>%select(Country.Name)
+df3$gdp = df_gdp$X2014
+df3 = inner_join(df3, df_electric, by = "Country.Name")
+ggplot(data= df3, aes(x = log(df3$gdp), y = log(df3$X2014))) + geom_point()
+```
+
+```{r  (case study- 3 country specific- timescale - co2 emission)}
+
+
+# Top 3 co2 emission based on 2014 data
+
+temp <- arrange(df_co2kt, df_co2kt$X2014)
+head(temp)
+#Top countries = USA, China , India
+
+#Case 1 = USA
+df5 = df_co2kt%>%filter(Country.Name == "United States")
+df5 = df5%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_usa <- data.frame(
+                 USA=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+
+row =1
+y =1960
+for(i in 1:ncol(df5))
+{
+  df_usa[row,1] = df5[1,i]
+  df_usa[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+g11 = ggplot(data = df_usa ,aes(x=df_usa$year,y=df_usa$USA, group=1)) +
+  geom_line()+
+  geom_point()+ ggtitle("Case- United States - CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+g11
+
+g1 = ggplot(data = df_usa ,aes(x=df_usa$year,y=df_usa$USA)) + geom_bar(stat = "identity") + ggtitle("Case- United States - CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+
+#Case 2 = China
+df6 = df_co2kt%>%filter(Country.Name == "China")
+df6 = df6%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_china <- data.frame(
+                 China=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df6))
+{
+  df_china[row,1] = df6[1,i]
+  df_china[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+g2 = ggplot(data = df_china,aes(x=df_china$year,y=df_china$China)) + geom_bar(stat = "identity") + ggtitle("Case- China - CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+
+#Case 3 = India
+
+df7 = df_co2kt%>%filter(Country.Name == "India")
+df7 = df7%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_india <- data.frame(
+                 India=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df7))
+{
+  df_india[row,1] = df7[1,i]
+  df_india[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+g3 = ggplot(data = df_india,aes(x=df_india$year,y=df_india$India)) + geom_bar(stat = "identity") + ggtitle("Case- India- CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+
+#Case 4 = World
+
+df8 = df_co2kt%>%filter(Country.Name == "World")
+df8 = df8%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_world <- data.frame(
+                 World=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df8))
+{
+  df_world[row,1] = df8[1,i]
+  df_world[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+g4 = ggplot(data = df_world,aes(x=df_world$year,y=df_world$World)) + geom_bar(stat = "identity") + ggtitle("Case- World- CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+#Case 5 = Germany
+df9 = df_co2kt%>%filter(Country.Name == "Germany")
+df9 = df9%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_germany <- data.frame(
+                 Germany=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df9))
+{
+  df_germany[row,1] = df9[1,i]
+  df_germany[row,2] = y
+  row = row +1
+  y = y +1
+}
+g5 = ggplot(data = df_germany,aes(x=df_germany$year,y=df_germany$Germany)) + geom_bar(stat = "identity") + ggtitle("Case- Germany- CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+g1 
+g2
+g3
+g4
+g5
+
+temp = full_join(df_usa,df_china,by="year")
+temp = full_join(temp,df_india,by="year")
+temp = full_join(temp,df_world,by="year")
+temp = full_join(temp,df_germany,by="year")
+
+library(reshape2)
+
+dfm <- melt(temp[,c('World','Germany','China','India','USA','World')],id.vars = 1)
+dfm$year = temp$year
+
+
+
+
+ggplot(dfm,aes(x = year,y = value)) + 
+    geom_line(aes(color = variable)) + geom_point(size=0)+scale_y_log10()  + ggtitle("Comparaision -CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+
+```
+
+```{r  (case study- 3 country specific- timescale - electricity consumption)}
+
+
+# Top 3 co2 emission based on 2014 data
+
+temp <- arrange(df_elec_kwpy , df_elec_kwpy$X2014)
+head(temp)
+
+#Top countries =  China , USA,  India
+
+#Case 1 = USA
+df5 = df_electric%>%filter(Country.Name == "United States")
+df55 = df_population%>%filter(Country.Name == "United States")
+df5 = df5%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df55 = df55%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+head(df5)
+head(df6)
+df_usa <- data.frame(
+                 USA=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+str(df_usa)
+
+row =1
+y =1960
+for(i in 1:ncol(df5))
+{
+  df_usa[row,1] = df5[1,i] * df55[1,i]
+  df_usa[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+ggplot(data = df_usa ,aes(x=df_usa$year,y=df_usa$USA)) + geom_bar(stat = "identity") + ggtitle("Case- United States - Electricity in kWh per year -Since 1960") + xlab("Year") + ylab("Electricity in kWh per year")
+
+#Case 2 = China
+df6 = df_electric%>%filter(Country.Name == "China")
+df66 = df_population%>%filter(Country.Name == "China")
+df6 = df6%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df66 = df66%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_china <- data.frame(
+                 China=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df6))
+{
+  df_china[row,1] = df6[1,i] * df66[1,i]
+  df_china[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+ggplot(data = df_china,aes(x=df_china$year,y=df_china$China)) + geom_bar(stat = "identity") + ggtitle("Case- China - Electricity in kWh per year -Since 1960") + xlab("Year") + ylab("Electricity in kWh per year")
+
+
+#Case 3 = India
+
+df7 = df_electric%>%filter(Country.Name == "India")
+df77 = df_population%>%filter(Country.Name == "India")
+df7 = df7%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df77 = df77%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_india <- data.frame(
+                 India=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df7))
+{
+  df_india[row,1] = df7[1,i] * df77[1,i]
+  df_india[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+ggplot(data = df_india,aes(x=df_india$year,y=df_india$India)) + geom_bar(stat = "identity") + ggtitle("Case- India - Electricity in kWh per year -Since 1960") + xlab("Year") + ylab("Electricity in kWh per year")
+
+#Case 4 = World
+df8 = df_electric%>%filter(Country.Name == "World")
+df88 = df_population%>%filter(Country.Name == "World")
+df8 = df8%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df88 = df88%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_world <- data.frame(
+                 World=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df8))
+{
+  df_world[row,1] = df8[1,i] * df88[1,i]
+  df_world[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+ggplot(data = df_world,aes(x=df_world$year,y=df_world$World)) + geom_bar(stat = "identity") + ggtitle("Case- World - Electricity in kWh per year -Since 1960") + xlab("Year") + ylab("Electricity in kWh")
+
+
+#Case 4 = Germany
+df8 = df_electric%>%filter(Country.Name == "Germany")
+df88 = df_population%>%filter(Country.Name == "Germany")
+df8 = df8%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df88 = df88%>%select(-Country.Name, -Country.Code, -Indicator.Name, -Indicator.Code)
+df_Germany <- data.frame(
+                 Germany=integer(),
+                 year=integer(),
+                 stringsAsFactors=FALSE)
+row =1
+y =1960
+for(i in 1:ncol(df8))
+{
+  df_Germany[row,1] = df8[1,i] * df88[1,i]
+  df_Germany[row,2] = y
+  row = row +1
+  y = y +1
+}
+
+ggplot(data = df_Germany,aes(x=df_Germany$year ,y=df_Germany$Germany)) + geom_bar(stat = "identity") + ggtitle("Case- Germany - Electricity in kWh per year -Since 1960") + xlab("Year") + ylab("Electricity in kWh per year")
+
+
+
+temp = full_join(df_usa,df_china,by="year")
+temp = full_join(temp,df_india,by="year")
+temp = full_join(temp,df_world,by="year")
+temp = full_join(temp,df_Germany,by="year")
+
+dfm <- melt(temp[,c('World','Germany','China','India','USA','World')],id.vars = 1)
+
+str(dfm)
+dfm$year = temp$year
+ggplot(temp,aes(x = year,y = USA)) + 
+    geom_line() + geom_point()+scale_y_log10()
+
+ggplot(dfm,aes(x = year,y = value)) + 
+    geom_line(aes(color = variable)) + geom_point(alpha=0.5)+scale_y_log10()  + ggtitle("Comparaision -CO2 Emissions in Kilo Tons- Since 1960") + xlab("Year") + ylab("CO2 Emissions Kilo Tons")
+
+ggplot(dfm,aes(x = year,y = value)) + 
+    geom_line(aes(color = variable)) + geom_point(size=0)+scale_y_log10()  + ggtitle("Comparision -Electricity Consumption khW / year- Since 1960") + xlab("Year") + ylab("Electricity Consumption khW")
+```
+
+
+
+```{r  (World Map)}
+
+
+
+
+df_world1 <- read.csv("finalworld1.csv")
+
+wor <- map_data("world")
+
+
+ df = df_world1
+ colnames(df)[colnames(df)=="ï..Country.Name"] <- "region"
+ 
+ wor.map = left_join(wor, df, by ="region")
+wor.map  %>% 
+  ggplot(aes(x = long, y = lat, fill=log(X2014) )) +
+  geom_polygon(aes(group=group)) + ggtitle("World Map - CO2 Emission") + xlab("Longitude") + ylab("Latitude") +  labs(fill='Scale') 
+ 
+
+
+
+
+ wor <-map_data("world");
+ df1 <- read.csv("finalworld1.csv")
+ df2 = df_population
+ temp = df1
+ for(i in 5:59)
+ {
+   temp[,i] = df1[,i] * df2[,i]
+   
+ }
+ 
+ colnames(temp)[colnames(temp)=="ï..Country.Name"] <- "region"
+ wor1.map = left_join(wor, temp, by ="region")
+ wor1.map  %>% 
+  ggplot(aes(x = long, y = lat, fill=log(X2014) )) +
+  geom_polygon(aes(group=group))+ ggtitle("World Map - Electricity Consumption - kWh per year") + xlab("Longitude") + ylab("Latitude") +  labs(fill='Scale') 
+```
+
+
+```{r   (World map- co2)} 
+
+df = data
+
+names(df)[names(df) == 'name'] <- 'Country.Name'
+df$Country.Name = as.factor(df$Country.Name)
+
+df = inner_join(df, df_co2kt , by = "Country.Name")
+
+
+
+dff = df%>%filter(Country.Name == "India" | Country.Name == "United States" | Country.Name == "Germany" | Country.Name == "Niger" | Country.Name == "China")
+dff %>% ggplot(aes(x=Country.Name,y=X2014)) + geom_bar(stat = "identity") 
+```
+
+
